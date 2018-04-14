@@ -40,7 +40,6 @@ typedef struct
 
 // Library include goes there
 #include <stdio.h>
-#include <string.h>
 
 // Global varialbes goes there
 static int         counter;
@@ -51,47 +50,69 @@ static Role        board[BOARD_ROW][BOARD_COL];
 // Function prototype declarations
 static void InitGlobalVariables(void);
 
-void    Human_Input(void);
-Boolean Safe_Check(void);
-void    Human_Move(void);
-Boolean Check_Tie(void);
-Boolean Check_Win(int row, int col, Role player);
-void    Print_Cell(Role content);
-void    Print_Board(void);
+void        Human_Input(void);
+Boolean     Safe_Check(void);
+void        Human_Move(void);
+Boolean     Check_Tie(void);
+Boolean     Check_Win(int row, int col, Role player);
+void        Print_Cell(Role content);
+void        Print_Board(void);
+Decision    Min_Max_Decision(int row, int col);
+Decision    Max_Value(int row, int col, Role player);
+Decision    Min_Value(int row, int col, Role player);
 
 // Entry function goes there
 int main(int argc, char const *argv[])
 {
+    // Initialize the board
     InitGlobalVariables();
     Print_Board();
 
     while(True)
     {
+        // Ask human to input the move
         Human_Move();
         Print_Board();
+
+        // Check the result after human move
+        if (Check_Win(current_board.row, current_board.col, current_player))
+        {
+            printf("Human win!\n");
+            break;
+        }
+
+        if (Check_Tie())
+        {
+            printf("Human and computer tied.\n");
+            break;
+        }
+
+        // Run the Min-Max-Decision Algorithm
+        Decision computer = Min_Max_Decision(current_board.row, current_board.col);
+
+        // Print out the result
+        printf("Min-Max-Algorithm result: [%d, %d]\n", \
+                computer.position.row + 1, computer.position.col + 1);
+        printf("Search tree nodes: %d\n", counter);
+        counter = 0;
+
+        // Update the board by Min-Max-Decision Algorithm
+        board[computer.position.row][computer.position.col] = Robot_O;
+        Print_Board();
+
+        // Check the result again after computer move
+        if (Check_Win(computer.position.row, computer.position.col, Robot_O))
+        {
+            printf("Computer win!\n");
+            break;
+        }
+
+        if (Check_Tie())
+        {
+            printf("Human and computer tied.\n");
+            break;
+        }
     }
-
-    // Human_Input();
-    // printf("%d %d %d\n", current_board.row, current_board.col, current_player);
-    // printf("%d\n", Safe_Check());
-    // Human_Move();
-    // Print_Board();
-    // printf("%d %d %d\n", WIN, LOSE, TIE);
-
-    // Decision final;
-    // final.value = INF_NEG;
-    // final.position.row = 29;
-    // final.position.col = 30;
-
-    // printf("%d %d %d\n", final.value, final.position.row, final.position.col);
-
-    // Decision start;
-    // start.value = INF_POS;
-    // BoardDim a = {200, 300};
-    // start.position = a;
-
-    // final.position = start.position;
-    // printf("%d %d %d\n", final.value, final.position.row, final.position.col);
 
     return 0;
 }
@@ -118,13 +139,12 @@ void Human_Input(void)
 {
     int x_axle, y_axle;
 
-    printf("Human player 'X', enter move >>>\n");
+    printf("Human player 'X', enter move:\n");
     printf("row[1-3]: ");
     scanf("%d", &x_axle);
 
     printf("col[1-3]: ");
     scanf("%d", &y_axle);
-    // printf("%d %d\n", x_axle, y_axle);
 
     current_player = Human_X;
     current_board.row = x_axle - 1;
@@ -185,6 +205,7 @@ Boolean Check_Tie(void)
 Boolean Check_Win(int row, int col, Role player)
 {
     Boolean res = True;
+
     int i;
     // Check the same row
     for (i = 0; i < BOARD_COL; ++i)
@@ -284,29 +305,34 @@ void Print_Board(void)
     }
     printf("\n");
 }
-/*
-void Set_Player(Role player)
+
+// The intuitive Min-Max-Algorithm
+Decision Min_Max_Decision(int row, int col)
 {
-    current_player = player;
+    Role player = Human_X;
+    return Min_Value(row, col, player);
 }
 
 // Human
-Decision Max_Value(void)
+Decision Max_Value(int row, int col, Role player)
 {
     counter += 1;
     Decision final;
 
     // Player is Robot
-    if (Check_Won())
+    if (Check_Win(row, col, player))
     {
         final.value = LOSE;
-        final.position = current_board;
+        final.position.row = row;
+        final.position.col = col;
         return final;
     }
-    else if (Check_Tie())
+    
+    if (Check_Tie())
     {
         final.value = TIE;
-        final.position = current_board;
+        final.position.row = row;
+        final.position.col = col;
         return final;
     }
 
@@ -323,7 +349,7 @@ Decision Max_Value(void)
             {
                 // Mark the place as Human
                 board[i][j] = Human_X;
-                Decision next_decision = Maxx_Value();
+                Decision next_decision = Min_Value(i, j, Human_X);
 
                 if (final.value < next_decision.value)
                 {
@@ -331,7 +357,7 @@ Decision Max_Value(void)
                     final.position = next_decision.position;
                 }
 
-                // Un-mark the place
+                // Dismark the place
                 board[i][j] = Empty;
             }
         }
@@ -341,26 +367,29 @@ Decision Max_Value(void)
 }
 
 // Machine
-Decision Min_Value(void)
+Decision Min_Value(int row, int col, Role player)
 {
     counter += 1;
     Decision final;
 
-    // Player is Human
-    if (Check_Won())
+    // Player is Robot
+    if (Check_Win(row, col, player))
     {
-        final.value = LOSE;
-        final.position = current_board;
+        final.value = WIN;
+        final.position.row = row;
+        final.position.col = col;
         return final;
     }
-    else if (Check_Tie())
+    
+    if (Check_Tie())
     {
         final.value = TIE;
-        final.position = current_board;
+        final.position.row = row;
+        final.position.col = col;
         return final;
     }
 
-    final.value = INF_NEG;
+    final.value = INF_POS;
     final.position.row = INI_POS;
     final.position.col = INI_POS;
 
@@ -372,16 +401,16 @@ Decision Min_Value(void)
             if (board[i][j] == Empty)
             {
                 // Mark the place as Human
-                board[i][j] = Human_X;
-                Decision next_decision = Maxx_Value();
+                board[i][j] = Robot_O;
+                Decision next_decision = Max_Value(i, j, Robot_O);
 
-                if (final.value < next_decision.value)
+                if (final.value > next_decision.value)
                 {
                     final.value = next_decision.value;
                     final.position = next_decision.position;
                 }
 
-                // Un-mark the place
+                // Dismark the place
                 board[i][j] = Empty;
             }
         }
@@ -389,4 +418,3 @@ Decision Min_Value(void)
 
     return final;
 }
-*/
