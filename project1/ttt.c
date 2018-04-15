@@ -31,7 +31,7 @@ typedef struct
 } Decision;
 
 // Global define goes there
-#define DEBUG       False
+#define DEBUG       0
 #define BOARD_ROW   3
 #define BOARD_COL   3
 #define INF_NEG     -100
@@ -64,8 +64,15 @@ Decision    Min_Value(int row, int col, Role player);
 // Entry function goes there
 int main(int argc, char const *argv[])
 {
+    #if DEBUG
+    printf("%d %d %d\n", WIN, LOSE, TIE);
+    printf("%d %d\n", False, True);
+
+    #else
     // Initialize the board
     InitGlobalVariables();
+    
+    printf("Tic-Tac-Toe Human vs. Computer!!!\n");
     Print_Board();
 
     while(True)
@@ -113,6 +120,7 @@ int main(int argc, char const *argv[])
             break;
         }
     }
+    #endif
 
     return 0;
 }
@@ -313,7 +321,7 @@ Decision Min_Max_Decision(int row, int col)
     return Min_Value(row, col, player);
 }
 
-// Human
+// Human's turn
 Decision Max_Value(int row, int col, Role player)
 {
     counter += 1;
@@ -354,7 +362,8 @@ Decision Max_Value(int row, int col, Role player)
                 if (final.value < next_decision.value)
                 {
                     final.value = next_decision.value;
-                    final.position = next_decision.position;
+                    final.position.row = i;
+                    final.position.col = j;
                 }
 
                 // Dismark the place
@@ -366,13 +375,13 @@ Decision Max_Value(int row, int col, Role player)
     return final;
 }
 
-// Machine
+// Machine's turn
 Decision Min_Value(int row, int col, Role player)
 {
     counter += 1;
     Decision final;
 
-    // Player is Robot
+    // Player is Human
     if (Check_Win(row, col, player))
     {
         final.value = WIN;
@@ -400,14 +409,15 @@ Decision Min_Value(int row, int col, Role player)
         {
             if (board[i][j] == Empty)
             {
-                // Mark the place as Human
+                // Mark the place as Machine
                 board[i][j] = Robot_O;
                 Decision next_decision = Max_Value(i, j, Robot_O);
 
                 if (final.value > next_decision.value)
                 {
                     final.value = next_decision.value;
-                    final.position = next_decision.position;
+                    final.position.row = i;
+                    final.position.col = j;
                 }
 
                 // Dismark the place

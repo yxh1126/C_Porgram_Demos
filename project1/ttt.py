@@ -314,6 +314,7 @@ if __name__ == '__main__':
         '''
         Run the Minimax algorithm
         '''
+        # print(current_row, current_col)
         computer = minmax_decsion(board, current_row, current_col)
 
         # Showing the result here
